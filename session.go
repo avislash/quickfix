@@ -37,7 +37,6 @@ func (n noopDebugger) Debugf(_ string, _ ...interface{}) {}
 var Debug Debugger = noopDebugger{}
 
 // The Session is the primary FIX abstraction for message communication
-
 type session struct {
 	store MessageStore
 
