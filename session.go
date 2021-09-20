@@ -26,7 +26,17 @@ import (
 	"github.com/quickfixgo/quickfix/internal"
 )
 
-// The Session is the primary FIX abstraction for message communication.
+type Debugger interface {
+	Debugf(fmt string, args ...interface{})
+}
+
+type noopDebugger struct{}
+
+func (n noopDebugger) Debugf(_ string, _ ...interface{}) {}
+
+var Debug Debugger = noopDebugger{}
+
+// The Session is the primary FIX abstraction for message communication
 type session struct {
 	store MessageStore
 
@@ -801,23 +811,31 @@ func (s *session) run() {
 		select {
 
 		case msg := <-s.admin:
+			Debug.Debugf("Processing admin message")
 			s.onAdmin(msg)
-
+			Debug.Debugf("Done processing admin message")
 		case <-s.messageEvent:
+			Debug.Debugf("Processing message event")
 			s.SendAppMessages(s)
-
+			Debug.Debugf("Done processing message event")
 		case fixIn, ok := <-s.messageIn:
+			Debug.Debugf("Processing inbound message")
 			if !ok {
+				Debug.Debugf("Handling disconnected")
 				s.Disconnected(s)
 			} else {
+				Debug.Debugf("Handling incoming")
 				s.Incoming(s, fixIn)
 			}
-
+			Debug.Debugf("Done processing message")
 		case evt := <-s.sessionEvent:
+			Debug.Debugf("Processing session event")
 			s.Timeout(s, evt)
-
+			Debug.Debugf("Done processing session event")
 		case now := <-ticker.C:
+			Debug.Debugf("Checking session")
 			s.CheckSessionTime(s, now)
+			Debug.Debugf("Done checking session")
 		}
 	}
 }
